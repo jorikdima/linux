@@ -436,13 +436,20 @@ static int s3c_rtc_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id s3c_rtc_dt_match[];
+static struct s3c_rtc_data const s3c6410_rtc_data;
 
 static struct s3c_rtc_data *s3c_rtc_get_data(struct platform_device *pdev)
 {
+#ifdef CONFIG_OF
 	const struct of_device_id *match;
-
+	
 	match = of_match_node(s3c_rtc_dt_match, pdev->dev.of_node);
-	return (struct s3c_rtc_data *)match->data;
+	
+	if (match != NULL)
+	  return (struct s3c_rtc_data *)match->data;
+	else
+#endif	  
+	  return (struct s3c_rtc_data *)platform_get_device_id(pdev)->driver_data;
 }
 
 static int s3c_rtc_probe(struct platform_device *pdev)
@@ -789,7 +796,7 @@ static struct s3c_rtc_data const s3c2443_rtc_data = {
 
 static struct s3c_rtc_data const s3c6410_rtc_data = {
 	.max_user_freq		= 32768,
-	.needs_src_clk		= true,
+	.needs_src_clk		= false,
 	.irq_handler		= s3c6410_rtc_irq,
 	.set_freq		= s3c6410_rtc_setfreq,
 	.enable_tick		= s3c6410_rtc_enable_tick,
@@ -798,7 +805,7 @@ static struct s3c_rtc_data const s3c6410_rtc_data = {
 	.enable			= s3c24xx_rtc_enable,
 	.disable		= s3c6410_rtc_disable,
 };
-
+#ifdef CONFIG_OF
 static const struct of_device_id s3c_rtc_dt_match[] = {
 	{
 		.compatible = "samsung,s3c2410-rtc",
@@ -819,10 +826,23 @@ static const struct of_device_id s3c_rtc_dt_match[] = {
 	{ /* sentinel */ },
 };
 MODULE_DEVICE_TABLE(of, s3c_rtc_dt_match);
+#endif
+
+static const struct platform_device_id s3c_rtc_driver_ids[] = {
+	{
+		.name		= "s3c2410-rtc",
+		.driver_data	= (kernel_ulong_t)&s3c2410_rtc_data,
+	}, {
+		.name		= "s3c64xx-rtc",
+		.driver_data	= (kernel_ulong_t)&s3c6410_rtc_data,
+	},
+	{ }
+};
 
 static struct platform_driver s3c_rtc_driver = {
 	.probe		= s3c_rtc_probe,
 	.remove		= s3c_rtc_remove,
+	.id_table	= s3c_rtc_driver_ids,
 	.driver		= {
 		.name	= "s3c-rtc",
 		.pm	= &s3c_rtc_pm_ops,
@@ -834,4 +854,4 @@ module_platform_driver(s3c_rtc_driver);
 MODULE_DESCRIPTION("Samsung S3C RTC Driver");
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("platform:s3c2410-rtc");
+MODULE_ALIAS("platform:s3c-rtc");

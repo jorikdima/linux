@@ -164,6 +164,37 @@ void __init samsung_clk_register_fixed_rate(struct samsung_clk_provider *ctx,
 	}
 }
 
+/* register a list of fixed clocks with enable*/
+void __init samsung_clk_register_fixed_rate_wen(struct samsung_clk_provider *ctx,
+		const struct samsung_fixed_rate_wen_clock *list,
+		unsigned int nr_clk)
+{
+	struct clk *clk;
+	unsigned int idx, ret;
+
+	for (idx = 0; idx < nr_clk; idx++, list++) {
+		clk = clk_register_fixed_rate_wen(NULL, list->name,
+			list->parent_name, list->flags, list->fixed_rate,
+			list->enable, list->disable);
+		if (IS_ERR(clk)) {
+			pr_err("%s: failed to register clock %s\n", __func__,
+				list->name);
+			continue;
+		}
+
+		samsung_clk_add_lookup(ctx, clk, list->id);
+
+		/*
+		 * Unconditionally add a clock lookup for the fixed rate clocks.
+		 * There are not many of these on any of Samsung platforms.
+		 */
+		ret = clk_register_clkdev(clk, list->name, NULL);
+		if (ret)
+			pr_err("%s: failed to register clock lookup for %s",
+				__func__, list->name);
+	}
+}
+
 /* register a list of fixed factor clocks */
 void __init samsung_clk_register_fixed_factor(struct samsung_clk_provider *ctx,
 		const struct samsung_fixed_factor_clock *list, unsigned int nr_clk)

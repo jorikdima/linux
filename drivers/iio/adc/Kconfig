@@ -207,6 +207,14 @@ config EXYNOS_ADC
 	  To compile this driver as a module, choose M here: the module will be
 	  called exynos_adc.
 
+config MINI6410_ADC
+	bool "ADC driver for FriendlyARM Mini6410 development boards"
+	depends on MACH_MINI6410
+	default y if MACH_MINI6410
+	help
+	  this is ADC driver for FriendlyARM Mini6410 development boards
+	  
+
 config FSL_MX25_ADC
 	tristate "Freescale MX25 ADC driver"
 	depends on MFD_MX25_TSADC

@@ -2065,6 +2065,8 @@ config FB_S3C2410_DEBUG
 	help
 	  Turn on debugging messages. Note that you can set/unset at run time
 	  through sysfs
+	  
+source "drivers/video/fbdev/samsung/Kconfig"	  
 
 config FB_NUC900
         tristate "NUC900 LCD framebuffer support"

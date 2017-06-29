@@ -4,7 +4,7 @@
 # Licensed under GPLv2
 menuconfig ARCH_S3C64XX
 	bool "Samsung S3C64XX"
-	depends on ARCH_MULTI_V6
+	depends on TYNY6410#ARCH_MULTI_V6
 	select ARM_AMBA
 	select ARM_VIC
 	select CLKSRC_SAMSUNG_PWM
@@ -15,6 +15,7 @@ menuconfig ARCH_S3C64XX
 	select HAVE_S3C2410_WATCHDOG if WATCHDOG
 	select HAVE_TCM
 	select PLAT_SAMSUNG
+	select PLAT_S3C64XX
 	select PM_GENERIC_DOMAINS if PM
 	select S3C_DEV_NAND if ATAGS
 	select S3C_GPIO_TRACK if ATAGS
@@ -27,6 +28,10 @@ menuconfig ARCH_S3C64XX
 if ARCH_S3C64XX
 
 # Configuration options for the S3C6410 CPU
+
+config PLAT_S3C64XX
+	bool
+	
 
 config CPU_S3C6400
 	bool
@@ -135,13 +140,20 @@ config MACH_MINI6410
 	select CPU_S3C6410
 	select S3C64XX_SETUP_FB_24BPP
 	select S3C64XX_SETUP_SDHCI
+	select S3C64XX_SETUP_USB_PHY
 	select S3C_DEV_FB
 	select S3C_DEV_HSMMC
 	select S3C_DEV_HSMMC1
 	select S3C_DEV_NAND
 	select S3C_DEV_USB_HOST
-	select SAMSUNG_DEV_ADC
-	select SAMSUNG_DEV_TS
+	select S3C_DEV_USB_HSOTG
+	select SAMSUNG_DEV_ADC	
+	#select SAMSUNG_DEV_TS	
+	#select S3C_DEV_WDT
+	#select S3C_DEV_RTC	
+	#select S3C64XX_DEV_FIMC0 if VIDEO_SAMSUNG
+	#select S3C64XX_DEV_FIMC1 if VIDEO_SAMSUNG
+	
 	help
 	  Machine support for the FriendlyARM MINI6410
 

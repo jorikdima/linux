@@ -162,6 +162,20 @@
 /* Set the default nr_irqs, boards can override if necessary */
 #define S3C64XX_NR_IRQS	IRQ_BOARD_START
 
+#ifdef CONFIG_SMDK6410_WM1190_EV1
+#define IRQ_BOARD_NR 64
+#elif defined(CONFIG_SMDK6410_WM1192_EV1)
+#define IRQ_BOARD_NR 64
+#else
+#define IRQ_BOARD_NR 16
+#endif
+
+#define IRQ_BOARD_END (IRQ_BOARD_START + IRQ_BOARD_NR)
+
+/* Set the default NR_IRQS */
+
+#define NR_IRQS	(IRQ_BOARD_END + 1)
+
 /* Compatibility */
 
 #define IRQ_ONENAND	IRQ_ONENAND0

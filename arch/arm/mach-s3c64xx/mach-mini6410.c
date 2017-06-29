@@ -17,6 +17,7 @@
 #include <linux/fb.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
+#include <linux/delay.h>
 #include <linux/list.h>
 #include <linux/dm9000.h>
 #include <linux/mtd/mtd.h>
@@ -37,7 +38,9 @@
 #include <plat/cpu.h>
 #include <plat/devs.h>
 #include <plat/fb.h>
+#include <plat/gpio-cfg.h>
 #include <linux/platform_data/mtd-nand-s3c2410.h>
+#include <linux/platform_data/s3c-hsotg.h>
 #include <linux/platform_data/mmc-sdhci-s3c.h>
 #include <plat/sdhci.h>
 #include <linux/platform_data/touchscreen-s3c2410.h>
@@ -50,10 +53,15 @@
 #include "common.h"
 #include "regs-modem.h"
 #include "regs-srom.h"
+#include "regs-usb-hsotg-phy.h"
 
 #define UCON S3C2410_UCON_DEFAULT
 #define ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB)
 #define UFCON (S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE)
+
+extern int s3c_usb_otgphy_init(struct device *dev);
+extern int s3c_usb_otgphy_exit(void);
+
 
 static struct s3c2410_uartcfg mini6410_uartcfgs[] __initdata = {
 	[0] = {
@@ -97,6 +105,7 @@ static struct resource mini6410_dm9k_resource[] = {
 
 static struct dm9000_plat_data mini6410_dm9k_pdata = {
 	.flags		= (DM9000_PLATF_16BITONLY | DM9000_PLATF_NO_EEPROM),
+	.dev_addr	= { 0x08, 0x90, 0x00, 0xa0, 0x90, 0x90 }
 };
 
 static struct platform_device mini6410_device_eth = {
@@ -114,16 +123,18 @@ static struct mtd_partition mini6410_nand_part[] = {
 		.name	= "uboot",
 		.size	= SZ_1M,
 		.offset	= 0,
+        .mask_flags	= MTD_CAP_NANDFLASH,
 	},
 	[1] = {
 		.name	= "kernel",
-		.size	= SZ_2M,
+		.size	= SZ_4M,
 		.offset	= SZ_1M,
+        .mask_flags	= MTD_CAP_NANDFLASH,
 	},
 	[2] = {
 		.name	= "rootfs",
 		.size	= MTDPART_SIZ_FULL,
-		.offset	= SZ_1M + SZ_2M,
+		.offset	= MTDPART_OFS_APPEND,
 	},
 };
 
@@ -153,12 +164,12 @@ static struct s3c_fb_pd_win mini6410_lcd_type0_fb_win = {
 
 static struct fb_videomode mini6410_lcd_type0_timing = {
 	/* 4.3" 480x272 */
-	.left_margin	= 3,
-	.right_margin	= 2,
-	.upper_margin	= 1,
-	.lower_margin	= 1,
-	.hsync_len	= 40,
-	.vsync_len	= 1,
+	.left_margin	= 40,
+	.right_margin	= 5,
+	.upper_margin	= 8,
+	.lower_margin	= 8,
+	.hsync_len	= 2,
+	.vsync_len	= 2,
 	.xres		= 480,
 	.yres		= 272,
 };
@@ -187,6 +198,9 @@ static struct s3c_fb_platdata mini6410_lcd_pdata[] __initdata = {
 		.setup_gpio	= s3c64xx_fb_gpio_setup_24bpp,
 		.vtiming	= &mini6410_lcd_type0_timing,
 		.win[0]		= &mini6410_lcd_type0_fb_win,
+		.win[1]		= &mini6410_lcd_type0_fb_win,
+		.win[2]		= &mini6410_lcd_type0_fb_win,
+		.win[3]		= &mini6410_lcd_type0_fb_win,
 		.vidcon0	= VIDCON0_VIDOUT_RGB | VIDCON0_PNRMODE_RGB,
 		.vidcon1	= VIDCON1_INV_HSYNC | VIDCON1_INV_VSYNC,
 	}, {
@@ -199,13 +213,41 @@ static struct s3c_fb_platdata mini6410_lcd_pdata[] __initdata = {
 	{ },
 };
 
+#ifdef CONFIG_USB_OTG
+static struct s3c_hsotg_plat mini6410_usbotg_pdata __initdata = {
+#ifdef CONFIG_S3C64XX_SETUP_USB_PHY
+	.phy_init = &s3c_usb_otgphy_init,
+	.phy_exit = &s3c_usb_otgphy_exit,
+#endif
+	.otg_phy_ptr = S3C_VA_USB_HSPHY,
+	.sys_ptr = S3C_VA_SYS
+};
+#endif
+
+
+/* framebuffer and LCD setup. */
+
+/* GPF15 = LCD backlight control
+ * GPF13 => Panel power
+ * GPN5 = LCD nRESET signal
+ * PWM_TOUT1 => backlight brightness
+ */
 static void mini6410_lcd_power_set(struct plat_lcd_data *pd,
 				   unsigned int power)
 {
-	if (power)
-		gpio_direction_output(S3C64XX_GPE(0), 1);
-	else
-		gpio_direction_output(S3C64XX_GPE(0), 0);
+	if (power) {
+		gpio_direction_output(S3C64XX_GPF(13), 1);
+		gpio_direction_output(S3C64XX_GPF(15), 1);
+
+		/* fire nRESET on power up */
+		gpio_direction_output(S3C64XX_GPN(5), 0);
+		msleep(10);
+		gpio_direction_output(S3C64XX_GPN(5), 1);
+		msleep(1);		
+	} else {
+		gpio_direction_output(S3C64XX_GPF(15), 0);
+		gpio_direction_output(S3C64XX_GPF(13), 0);		
+	}
 }
 
 static struct plat_lcd_data mini6410_lcd_power_data = {
@@ -220,31 +262,94 @@ static struct platform_device mini6410_lcd_powerdev = {
 
 static struct s3c_sdhci_platdata mini6410_hsmmc1_pdata = {
 	.max_width		= 4,
-	.cd_type		= S3C_SDHCI_CD_GPIO,
+	.cd_type		= S3C_SDHCI_CD_PERMANENT,
 	.ext_cd_gpio		= S3C64XX_GPN(10),
 	.ext_cd_gpio_invert	= true,
 };
 
-static struct platform_device *mini6410_devices[] __initdata = {
-	&mini6410_device_eth,
-	&s3c_device_hsmmc0,
-	&s3c_device_hsmmc1,
-	&s3c_device_ohci,
-	&s3c_device_nand,
-	&s3c_device_fb,
-	&mini6410_lcd_powerdev,
-	&s3c_device_adc,
+static struct s3c_sdhci_platdata mini6410_hsmmc0_pdata = {
+	.max_width		= 4,
+	.cd_type		= S3C_SDHCI_CD_INTERNAL,
+	//.ext_cd_gpio		= S3C64XX_GPN(10),
+	//.ext_cd_gpio_invert	= true,
 };
+
+
+static struct map_desc mini6410_iodesc[] = {
+	{
+		/* LCD support */
+		.virtual    	= (unsigned long)S3C_VA_LCD,
+		.pfn        	= __phys_to_pfn(S3C_PA_FB),
+		.length     	= SZ_16K,
+		.type       	= MT_DEVICE,
+	}
+};
+
+static struct platform_device *mini6410_devices[] __initdata = {
+#ifdef CONFIG_DM9000  
+	&mini6410_device_eth,
+#endif
+#ifdef CONFIG_S3C_DEV_HSMMC
+	&s3c_device_hsmmc0,
+#endif
+#ifdef CONFIG_S3C_DEV_HSMMC1	
+	&s3c_device_hsmmc1,
+#endif
+	&s3c_device_ohci,
+#ifdef CONFIG_USB_OTG	
+	&s3c_device_usb_hsotg,
+#endif
+#ifdef CONFIG_S3C_DEV_NAND	
+	&s3c_device_nand,
+#endif
+#ifdef CONFIG_S3C_DEV_FB
+	&s3c_device_fb,
+#endif
+	&mini6410_lcd_powerdev,
+#ifdef CONFIG_SAMSUNG_DEV_ADC	
+	&s3c_device_adc,
+#endif
+#ifdef CONFIG_RTC_DRV_S3C	
+	&s3c_device_rtc,
+#endif	
+#ifdef CONFIG_S3C2410_WATCHDOG	
+	&s3c_device_wdt,
+#endif
+	//s3c_device_ac97,
+	
+#ifdef CONFIG_S3C_DEV_HWMON
+       s3c_device_hwmon,
+#endif
+};
+
+
+#ifdef CONFIG_SAMSUNG_DEV_TS
+static struct s3c6410_ts_mach_info s3c_ts_platform __initdata = {
+	.delay			= 10000,
+	.presc			= 49,
+	.oversampling_shift	= 2,
+};
+#endif
+
+#ifdef CONFIG_TOUCHSCREEN_MINI6410
+static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
+	.delay			= 0xFFFF,
+	.presc			= 0xFF,
+	.oversampling_shift	= 2,
+	.resol_bit		= 12,
+	.s3c_adc_con		= ADC_TYPE_2,
+};
+#endif
 
 static void __init mini6410_map_io(void)
 {
 	u32 tmp;
 
-	s3c64xx_init_io(NULL, 0);
+	s3c64xx_init_io(mini6410_iodesc, ARRAY_SIZE(mini6410_iodesc));
 	s3c64xx_set_xtal_freq(12000000);
 	s3c24xx_init_uarts(mini6410_uartcfgs, ARRAY_SIZE(mini6410_uartcfgs));
-	samsung_set_timer_source(SAMSUNG_PWM3, SAMSUNG_PWM4);
-
+	samsung_set_timer_source(SAMSUNG_PWM2, SAMSUNG_PWM4);
+	
 	/* set the LCD type */
 	tmp = __raw_readl(S3C64XX_SPCON);
 	tmp &= ~S3C64XX_SPCON_LCD_SEL_MASK;
@@ -256,6 +361,7 @@ static void __init mini6410_map_io(void)
 	tmp &= ~MIFPCON_LCD_BYPASS;
 	__raw_writel(tmp, S3C64XX_MODEM_MIFPCON);
 }
+
 
 /*
  * mini6410_features string
@@ -325,15 +431,26 @@ static void __init mini6410_machine_init(void)
 	/* Parse the feature string */
 	mini6410_parse_features(&features, mini6410_features_str);
 
-	printk(KERN_INFO "MINI6410: selected LCD display is %dx%d\n",
+	printk(KERN_INFO "MINI6410: selected LCD display is %dx%d index = %d\n",
 		mini6410_lcd_pdata[features.lcd_index].win[0]->xres,
-		mini6410_lcd_pdata[features.lcd_index].win[0]->yres);
+		mini6410_lcd_pdata[features.lcd_index].win[0]->yres,features.lcd_index);
 
 	s3c_nand_set_platdata(&mini6410_nand_info);
 	s3c_fb_set_platdata(&mini6410_lcd_pdata[features.lcd_index]);
+	
+#ifdef CONFIG_SAMSUNG_DEV_TS
+	s3c64xx_ts_set_platdata(&s3c_ts_platform);
+#endif
+#ifdef CONFIG_TOUCHSCREEN_MINI6410
+	s3c_ts_set_platdata(&s3c_ts_platform);
+#endif
+	
 	s3c_sdhci1_set_platdata(&mini6410_hsmmc1_pdata);
-	s3c64xx_ts_set_platdata(NULL);
-
+	s3c_sdhci0_set_platdata(&mini6410_hsmmc0_pdata);
+	
+#ifdef CONFIG_USB_OTG	
+	s3c_hsotg_set_platdata(&mini6410_usbotg_pdata);
+#endif	
 	/* configure nCS1 width to 16 bits */
 
 	cs1 = __raw_readl(S3C64XX_SROM_BW) &
@@ -350,12 +467,16 @@ static void __init mini6410_machine_init(void)
 		(6 << S3C64XX_SROM_BCX__TACP__SHIFT) |
 		(4 << S3C64XX_SROM_BCX__TCAH__SHIFT) |
 		(1 << S3C64XX_SROM_BCX__TCOH__SHIFT) |
-		(13 << S3C64XX_SROM_BCX__TACC__SHIFT) |
+		(0xe << S3C64XX_SROM_BCX__TACC__SHIFT) |
 		(4 << S3C64XX_SROM_BCX__TCOS__SHIFT) |
 		(0 << S3C64XX_SROM_BCX__TACS__SHIFT), S3C64XX_SROM_BC1);
-
+	
+	gpio_request(S3C64XX_GPN(5), "LCD power");
+	gpio_request(S3C64XX_GPF(13), "LCD power");
 	gpio_request(S3C64XX_GPF(15), "LCD power");
-	gpio_request(S3C64XX_GPE(0), "LCD power");
+	//gpio_request(S3C64XX_GPE(0), "LCD power");
+	
+	mini6410_lcd_power_set(NULL, 1);
 
 	platform_add_devices(mini6410_devices, ARRAY_SIZE(mini6410_devices));
 }

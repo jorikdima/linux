@@ -299,6 +299,42 @@ void clk_hw_unregister_fixed_rate(struct clk_hw *hw);
 
 void of_fixed_clk_setup(struct device_node *np);
 
+
+/**
+ * struct clk_fixed_rate_wen - fixed-rate clock win enable
+ * @hw:		handle between common and hardware-specific interfaces
+ * @fixed_rate:	constant frequency of clock
+ */
+struct clk_fixed_rate_wen {
+	struct		clk_hw hw;
+	unsigned long	fixed_rate;
+	unsigned long	fixed_accuracy;
+	u8		flags;
+	int             (*enable)(struct device *dev);
+	int             (*disable)(void);
+	struct device   *dev;
+};
+
+#define to_clk_fixed_rate_wen(_hw) container_of(_hw, struct clk_fixed_rate_wen, hw)
+
+extern const struct clk_ops clk_fixed_rate_wen_ops;
+struct clk *clk_register_fixed_rate_wen(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		unsigned long fixed_rate, int (*en_ptr)(struct device *dev), int (*dis_ptr)(void));
+struct clk_hw *clk_hw_register_fixed_rate_wen(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		unsigned long fixed_rate, int (*en_ptr)(struct device *dev), int (*dis_ptr)(void));
+struct clk *clk_register_fixed_rate_wen_with_accuracy(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		unsigned long fixed_rate, unsigned long fixed_accuracy, int (*en_ptr)(struct device *dev), int (*dis_ptr)(void));
+void clk_unregister_fixed_rate_wen(struct clk *clk);
+struct clk_hw *clk_hw_register_fixed_rate_wen_with_accuracy(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		unsigned long fixed_rate, unsigned long fixed_accuracy, int (*en_ptr)(struct device *dev), int (*dis_ptr)(void));
+void clk_hw_unregister_fixed_rate_wen(struct clk_hw *hw);
+
+void of_fixed_clk_setup_wen(struct device_node *np);
+
 /**
  * struct clk_gate - gating clock
  *

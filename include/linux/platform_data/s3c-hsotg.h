@@ -39,4 +39,17 @@ struct dwc2_hsotg_plat {
 
 extern void dwc2_hsotg_set_platdata(struct dwc2_hsotg_plat *pd);
 
+
+struct s3c_hsotg_plat {	
+	unsigned int		is_osc:1;
+	
+	void* 			sys_ptr;
+	void*			otg_phy_ptr;
+	
+	int (*phy_init)(struct device *dev);
+	int (*phy_exit)(void);
+};
+
+extern void s3c_hsotg_set_platdata(struct s3c_hsotg_plat *pd);
+
 #endif /* __LINUX_USB_S3C_HSOTG_H */

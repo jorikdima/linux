@@ -607,6 +607,21 @@ config ARCH_S3C24XX
 	  and S3C2450 SoCs based systems, such as the Simtec Electronics BAST
 	  (<http://www.simtec.co.uk/products/EB110ITX/>), the IPAQ 1940 or the
 	  Samsung SMDK2410 development board (and derivatives).
+	  
+config TYNY6410
+	bool "Samsung S3C64XX SoCs"
+	select CPU_V6K
+	select MIGHT_HAVE_CACHE_L2X0
+	select ARM_HAS_SG_CHAIN
+	select ARM_PATCH_PHYS_VIRT
+	select AUTO_ZRELADDR
+	select CLKSRC_OF
+	select COMMON_CLK
+	select GENERIC_CLOCKEVENTS
+	select MIGHT_HAVE_PCI
+	select MULTI_IRQ_HANDLER
+	#select SPARSE_IRQ
+	select USE_OF	
 
 config ARCH_DAVINCI
 	bool "TI DaVinci"

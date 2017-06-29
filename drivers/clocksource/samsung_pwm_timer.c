@@ -250,8 +250,14 @@ static irqreturn_t samsung_clock_event_isr(int irq, void *dev_id)
 	struct clock_event_device *evt = dev_id;
 
 	if (pwm.variant.has_tint_cstat) {
+		unsigned long flags, cstat;
 		u32 mask = (1 << pwm.event_id);
-		writel(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
+		mask |= (mask << 5);
+		
+		local_irq_save(flags);
+		cstat = __raw_readl(pwm.base + REG_TINT_CSTAT);
+		writel(mask | cstat, pwm.base + REG_TINT_CSTAT);
+		local_irq_restore(flags);
 	}
 
 	evt->event_handler(evt);
@@ -397,6 +403,8 @@ static int __init _samsung_pwm_clocksource_init(void)
 		return -EINVAL;
 	}
 	pwm.event_id = channel;
+	
+	pr_info("Samsung clocksource initialization: channel %d, event channel %d", pwm.source_id, pwm.event_id);
 
 	samsung_timer_resources();
 	samsung_clockevent_init();
@@ -425,7 +433,7 @@ static int __init samsung_pwm_alloc(struct device_node *np,
 	struct property *prop;
 	const __be32 *cur;
 	u32 val;
-	int i;
+	int i;	
 
 	memcpy(&pwm.variant, variant, sizeof(pwm.variant));
 	for (i = 0; i < SAMSUNG_PWM_NUM; ++i)

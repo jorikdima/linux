@@ -14,6 +14,8 @@
 #include <linux/of_address.h>
 #include <linux/syscore_ops.h>
 
+#include <linux/platform_device.h>
+
 #include <dt-bindings/clock/samsung,s3c64xx-clock.h>
 
 #include "clk.h"
@@ -41,6 +43,8 @@
 /* Helper macros to define clock arrays. */
 #define FIXED_RATE_CLOCKS(name)	\
 		static struct samsung_fixed_rate_clock name[]
+#define FIXED_RATE_WEN_CLOCKS(name)	\
+		static struct samsung_fixed_rate_wen_clock name[]		
 #define MUX_CLOCKS(name)	\
 		static struct samsung_mux_clock name[]
 #define DIV_CLOCKS(name)	\
@@ -55,6 +59,11 @@
 		GATE(_id, cname, pname, o, b, CLK_SET_RATE_PARENT, 0)
 #define GATE_ON(_id, cname, pname, o, b) \
 		GATE(_id, cname, pname, o, b, CLK_IGNORE_UNUSED, 0)
+		
+		
+		
+extern int s3c_usb_otgphy_init(struct device *dev);
+extern int s3c_usb_otgphy_exit(void);		
 
 /* list of PLLs to be registered */
 enum s3c64xx_plls {
@@ -183,8 +192,13 @@ FIXED_RATE_CLOCKS(s3c64xx_fixed_rate_ext_clks) __initdata = {
 /* Fixed rate clocks generated inside the SoC. */
 FIXED_RATE_CLOCKS(s3c64xx_fixed_rate_clks) __initdata = {
 	FRATE(CLK27M, "clk27m", NULL, 0, 27000000),
-	FRATE(CLK48M, "clk48m", NULL, 0, 48000000),
+	//FRATE(CLK48M, "clk48m", NULL, 0, 48000000),
 };
+
+FIXED_RATE_WEN_CLOCKS(s3c64xx_fixed_rate_wen_clks) __initdata = {	
+	FRATE_WEN(CLK48M, "clk48m", NULL, 0, 48000000, s3c_usb_otgphy_init, s3c_usb_otgphy_exit),
+};
+
 
 /* List of clock muxes present on all S3C64xx SoCs. */
 MUX_CLOCKS(s3c64xx_mux_clks) __initdata = {
@@ -386,6 +400,7 @@ static struct samsung_clock_alias s3c64xx_clock_aliases[] = {
 	ALIAS(ARMCLK, NULL, "armclk"),
 	ALIAS(HCLK_UHOST, "s3c2410-ohci", "usb-host"),
 	ALIAS(HCLK_USB, "s3c-hsotg", "otg"),
+	ALIAS(HCLK_USB, "s3c2410-ohci", "otg"),
 	ALIAS(HCLK_HSMMC2, "s3c-sdhci.2", "hsmmc"),
 	ALIAS(HCLK_HSMMC2, "s3c-sdhci.2", "mmc_busclk.0"),
 	ALIAS(HCLK_HSMMC1, "s3c-sdhci.1", "hsmmc"),
@@ -441,6 +456,8 @@ static struct samsung_clock_alias s3c6410_clock_aliases[] = {
 	ALIAS(SCLK_FIMC, "s3c-camif", "fimc"),
 	ALIAS(SCLK_AUDIO2, "samsung-i2s.2", "audio-bus"),
 	ALIAS(MEM0_SROM, NULL, "srom"),
+	ALIAS(MEM0_NFCON, "s3c6400-nand", "nand"),
+	
 };
 
 static void __init s3c64xx_clk_register_fixed_ext(
@@ -483,6 +500,8 @@ void __init s3c64xx_clk_init(struct device_node *np, unsigned long xtal_f,
 	/* Register common internal clocks. */
 	samsung_clk_register_fixed_rate(ctx, s3c64xx_fixed_rate_clks,
 					ARRAY_SIZE(s3c64xx_fixed_rate_clks));
+	samsung_clk_register_fixed_rate_wen(ctx, s3c64xx_fixed_rate_wen_clks,
+					ARRAY_SIZE(s3c64xx_fixed_rate_wen_clks));
 	samsung_clk_register_mux(ctx, s3c64xx_mux_clks,
 					ARRAY_SIZE(s3c64xx_mux_clks));
 	samsung_clk_register_div(ctx, s3c64xx_div_clks,

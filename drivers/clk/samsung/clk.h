@@ -75,6 +75,35 @@ struct samsung_fixed_rate_clock {
 		.flags		= f,			\
 		.fixed_rate	= frate,		\
 	}
+	
+/**
+ * struct samsung_fixed_rate_wen_clock: information about fixed-rate clock with enable
+ * @id: platform specific id of the clock.
+ * @name: name of this fixed-rate clock.
+ * @parent_name: optional parent clock name.
+ * @flags: optional fixed-rate clock flags.
+ * @fixed-rate: fixed clock rate of this clock.
+ */
+struct samsung_fixed_rate_wen_clock {
+	unsigned int		id;
+	char			*name;
+	const char		*parent_name;
+	unsigned long		flags;
+	unsigned long		fixed_rate;
+	int                     (*enable)(struct device *dev);
+	int                     (*disable)(void);
+};
+
+#define FRATE_WEN(_id, cname, pname, f, frate, en, dis)	\
+	{						\
+		.id		= _id,			\
+		.name		= cname,		\
+		.parent_name	= pname,		\
+		.flags		= f,			\
+		.fixed_rate	= frate,		\
+		.enable 	= en,			\
+		.disable	= dis 			\
+	}	
 
 /*
  * struct samsung_fixed_factor_clock: information about fixed-factor clock

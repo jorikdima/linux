@@ -194,12 +194,11 @@ EXPORT_SYMBOL_GPL(sdhci_reset);
 
 static void sdhci_do_reset(struct sdhci_host *host, u8 mask)
 {
-	if (host->quirks & SDHCI_QUIRK_NO_CARD_NO_RESET) {
-		struct mmc_host *mmc = host->mmc;
-
-		if (!mmc->ops->get_cd(mmc))
+	struct mmc_host *mmc = host->mmc;
+	
+	if (host->quirks & SDHCI_QUIRK_NO_CARD_NO_RESET &&
+	    !mmc->ops->get_cd(mmc)) 
 			return;
-	}
 
 	host->ops->reset(host, mask);
 
@@ -1382,7 +1381,7 @@ void sdhci_set_power(struct sdhci_host *host, unsigned char mode,
 {
 	u8 pwr = 0;
 
-	if (mode != MMC_POWER_OFF) {
+	if (mode == MMC_POWER_UP || mode == MMC_POWER_ON) {
 		switch (1 << vdd) {
 		case MMC_VDD_165_195:
 			pwr = SDHCI_POWER_180;
@@ -3264,10 +3263,12 @@ int sdhci_setup_host(struct sdhci_host *host)
 	if (host->caps & SDHCI_CAN_DO_HISPD)
 		mmc->caps |= MMC_CAP_SD_HIGHSPEED | MMC_CAP_MMC_HIGHSPEED;
 
+#ifndef CONFIG_MACH_MINI6410	
 	if ((host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION) &&
 	    mmc_card_is_removable(mmc) &&
 	    mmc_gpio_get_cd(host->mmc) < 0)
 		mmc->caps |= MMC_CAP_NEEDS_POLL;
+#endif
 
 	/* If vqmmc regulator and no 1.8V signalling, then there's no UHS */
 	if (!IS_ERR(mmc->supply.vqmmc)) {

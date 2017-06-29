@@ -459,6 +459,13 @@ config BACKLIGHT_BD6107
 	depends on I2C
 	help
 	  If you have a Rohm BD6107 say Y to enable the backlight driver.
+	  
+config BACKLIGHT_FRIENDLY_ARM
+	tristate "Backlight support for FriendlyARM board"
+	depends on FB && ARCH_S3C64XX
+	default y
+	help
+	  backlight driver for FriendlyARM board	  
 
 endif # BACKLIGHT_CLASS_DEVICE
 

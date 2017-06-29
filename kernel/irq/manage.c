@@ -1441,7 +1441,7 @@ int setup_irq(unsigned int irq, struct irqaction *act)
 	retval = __setup_irq(irq, desc, act);
 	chip_bus_sync_unlock(desc);
 
-	if (retval)
+	if (retval)		  
 		irq_chip_pm_put(&desc->irq_data);
 
 	return retval;

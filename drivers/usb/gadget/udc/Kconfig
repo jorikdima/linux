@@ -238,6 +238,22 @@ config USB_MV_U3D
 	help
 	  MARVELL PXA2128 Processor series include a super speed USB3.0 device
 	  controller, which support super speed USB peripheral.
+	  
+	  
+config USB_GADGET_S3C_HSOTG
+	boolean "S3C HS/OtG USB Device controller"
+	depends on S3C_DEV_USB_HSOTG
+	select USB_GADGET_S3C_HSOTG_PIO
+	select USB_GADGET_DUALSPEED
+	help
+	  The Samsung S3C64XX USB2.0 high-speed gadget controller
+	  integrated into the S3C64XX series SoC.
+
+config USB_S3C_HSOTG
+	tristate
+	depends on USB_GADGET_S3C_HSOTG
+	default USB_GADGET
+	select USB_GADGET_SELECTED	  
 
 #
 # Controllers available in both integrated and discrete versions

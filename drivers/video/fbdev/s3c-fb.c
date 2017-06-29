@@ -11,7 +11,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software FoundatIon.
 */
-
+#define DEBUG
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
@@ -25,6 +25,9 @@
 #include <linux/interrupt.h>
 #include <linux/pm_runtime.h>
 #include <linux/platform_data/video_s3c.h>
+
+#include <plat/gpio-cfg.h>
+#include <mach/gpio-samsung.h>
 
 #include <video/samsung_fimd.h>
 
@@ -57,6 +60,11 @@
 #define VSYNC_TIMEOUT_MSEC 50
 
 struct s3c_fb;
+
+#ifndef MHZ
+#define MHZ (1000 * 1000)
+#endif
+#define PRINT_MHZ(m) 			((m) / MHZ), ((m / 1000) % 1000)
 
 #define VALID_BPP(x) (1 << ((x) - 1))
 
@@ -962,7 +970,7 @@ static irqreturn_t s3c_fb_irq(int irq, void *dev_id)
 	struct s3c_fb *sfb = dev_id;
 	void __iomem  *regs = sfb->regs;
 	u32 irq_sts_reg;
-
+	
 	spin_lock(&sfb->slock);
 
 	irq_sts_reg = readl(regs + VIDINTCON1);
@@ -1376,7 +1384,7 @@ static int s3c_fb_probe(struct platform_device *pdev)
 		dev_err(dev, "too many windows, cannot attach\n");
 		return -EINVAL;
 	}
-
+		
 	pd = dev_get_platdata(&pdev->dev);
 	if (!pd) {
 		dev_err(dev, "no platform data specified\n");
@@ -1396,7 +1404,7 @@ static int s3c_fb_probe(struct platform_device *pdev)
 	sfb->variant = fbdrv->variant;
 
 	spin_lock_init(&sfb->slock);
-
+		
 	sfb->bus_clk = devm_clk_get(dev, "lcd");
 	if (IS_ERR(sfb->bus_clk)) {
 		dev_err(dev, "failed to get bus clock\n");
@@ -1404,6 +1412,7 @@ static int s3c_fb_probe(struct platform_device *pdev)
 	}
 
 	clk_prepare_enable(sfb->bus_clk);
+	printk("S3C_LCD clock got enabled :: %lu.%03lu Mhz\n", PRINT_MHZ(clk_get_rate(sfb->bus_clk)));
 
 	if (!sfb->variant.has_clksel) {
 		sfb->lcd_clk = devm_clk_get(dev, "sclk_fimd");
@@ -1447,7 +1456,7 @@ static int s3c_fb_probe(struct platform_device *pdev)
 	/* setup gpio and output polarity controls */
 
 	pd->setup_gpio();
-
+	
 	writel(pd->vidcon1, sfb->regs + VIDCON1);
 
 	/* set video clock running at under-run */
@@ -1474,7 +1483,7 @@ static int s3c_fb_probe(struct platform_device *pdev)
 
 	s3c_fb_set_rgb_timing(sfb);
 
-	/* we have the register setup, start allocating framebuffers */
+	/* we have the register setup, start allocating framebuffers */	
 
 	for (win = 0; win < fbdrv->variant.nr_windows; win++) {
 		if (!pd->win[win])

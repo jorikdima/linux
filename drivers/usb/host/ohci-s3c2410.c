@@ -386,7 +386,7 @@ static int usb_hcd_s3c2410_probe(const struct hc_driver *driver,
 	}
 
 	s3c2410_start_hc(dev, hcd);
-
+	
 	retval = usb_add_hcd(hcd, dev->resource[1].start, 0);
 	if (retval != 0)
 		goto err_ioremap;
@@ -404,7 +404,10 @@ static int usb_hcd_s3c2410_probe(const struct hc_driver *driver,
 
 /*-------------------------------------------------------------------------*/
 
-static struct hc_driver __read_mostly ohci_s3c2410_hc_driver;
+static struct hc_driver __read_mostly ohci_s3c2410_hc_driver ={
+        .flags =		HCD_USB11 | HCD_MEMORY,
+  
+};
 
 static int ohci_hcd_s3c2410_drv_probe(struct platform_device *pdev)
 {

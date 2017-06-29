@@ -539,8 +539,8 @@ static int ohci_run (struct ohci_hcd *ohci)
 				ohci->fminterval - FI);
 		ohci->fminterval |= FSMP (ohci->fminterval) << 16;
 		/* also: power/overcurrent flags in roothub.a */
-	}
-
+	}	
+	
 	/* Reset USB nearly "by the book".  RemoteWakeupConnected has
 	 * to be checked in case boot firmware (BIOS/SMM/...) has set up
 	 * wakeup in a way the bus isn't aware of (e.g., legacy PCI PM).

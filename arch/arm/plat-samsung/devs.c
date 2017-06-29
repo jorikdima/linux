@@ -850,7 +850,7 @@ struct platform_device s3c_device_rtc = {
 };
 #endif /* CONFIG_PLAT_S3C24XX */
 
-#ifdef CONFIG_S3C_DEV_RTC
+#ifdef CONFIG_RTC_DRV_S3C
 static struct resource s3c_rtc_resource[] = {
 	[0] = DEFINE_RES_MEM(S3C_PA_RTC, SZ_256),
 	[1] = DEFINE_RES_IRQ(IRQ_RTC_ALARM),
@@ -863,7 +863,7 @@ struct platform_device s3c_device_rtc = {
 	.num_resources	= ARRAY_SIZE(s3c_rtc_resource),
 	.resource	= s3c_rtc_resource,
 };
-#endif /* CONFIG_S3C_DEV_RTC */
+#endif /* CONFIG_RTC_DRV_S3C */
 
 /* SDI */
 
@@ -1021,7 +1021,7 @@ void __init s3c24xx_udc_set_platdata(struct s3c2410_udc_mach_info *pd)
 
 /* USB HSOTG */
 
-#ifdef CONFIG_S3C_DEV_USB_HSOTG
+#if defined(CONFIG_USB_OTG) && defined(CONFIG_S3C_DEV_USB_HOST)
 static struct resource s3c_usb_hsotg_resources[] = {
 	[0] = DEFINE_RES_MEM(S3C_PA_USB_HSOTG, SZ_128K),
 	[1] = DEFINE_RES_IRQ(IRQ_OTG),
@@ -1038,6 +1038,15 @@ struct platform_device s3c_device_usb_hsotg = {
 	},
 };
 
+void __init s3c_hsotg_set_platdata(struct s3c_hsotg_plat *pd)
+{
+	struct s3c_hsotg_plat *npd;
+
+	npd = s3c_set_platdata(pd, sizeof(struct s3c_hsotg_plat),
+			&s3c_device_usb_hsotg);	
+}
+
+#ifdef CONFIG_USB_DWC2
 void __init dwc2_hsotg_set_platdata(struct dwc2_hsotg_plat *pd)
 {
 	struct dwc2_hsotg_plat *npd;
@@ -1050,7 +1059,8 @@ void __init dwc2_hsotg_set_platdata(struct dwc2_hsotg_plat *pd)
 	if (!npd->phy_exit)
 		npd->phy_exit = s5p_usb_phy_exit;
 }
-#endif /* CONFIG_S3C_DEV_USB_HSOTG */
+#endif /* CONFIG_USB_DWC2 */
+#endif /* CONFIG_USB_OTG */
 
 /* USB High Spped 2.0 Device (Gadget) */
 
@@ -1079,7 +1089,7 @@ void __init s3c24xx_hsudc_set_platdata(struct s3c24xx_hsudc_platdata *pd)
 
 /* WDT */
 
-#ifdef CONFIG_S3C_DEV_WDT
+#ifdef CONFIG_S3C2410_WATCHDOG
 static struct resource s3c_wdt_resource[] = {
 	[0] = DEFINE_RES_MEM(S3C_PA_WDT, SZ_1K),
 	[1] = DEFINE_RES_IRQ(IRQ_WDT),
@@ -1091,7 +1101,7 @@ struct platform_device s3c_device_wdt = {
 	.num_resources	= ARRAY_SIZE(s3c_wdt_resource),
 	.resource	= s3c_wdt_resource,
 };
-#endif /* CONFIG_S3C_DEV_WDT */
+#endif /* CONFIG_S3C2410_WATCHDOG */
 
 #ifdef CONFIG_S3C64XX_DEV_SPI0
 static struct resource s3c64xx_spi0_resource[] = {

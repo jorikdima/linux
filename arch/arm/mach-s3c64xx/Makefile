@@ -42,7 +42,7 @@ obj-$(CONFIG_S3C64XX_SETUP_IDE)		+= setup-ide.o
 obj-$(CONFIG_S3C64XX_SETUP_KEYPAD)	+= setup-keypad.o
 obj-$(CONFIG_S3C64XX_SETUP_SDHCI_GPIO)	+= setup-sdhci-gpio.o
 obj-$(CONFIG_S3C64XX_SETUP_SPI)		+= setup-spi.o
-obj-$(CONFIG_S3C64XX_SETUP_USB_PHY) += setup-usb-phy.o
+obj-$(CONFIG_S3C64XX_SETUP_USB_PHY) 	+= setup-usb-phy.o
 
 obj-$(CONFIG_SAMSUNG_DEV_BACKLIGHT)	+= dev-backlight.o
 
@@ -50,7 +50,7 @@ obj-$(CONFIG_SAMSUNG_DEV_BACKLIGHT)	+= dev-backlight.o
 
 obj-$(CONFIG_MACH_ANW6410)		+= mach-anw6410.o
 obj-$(CONFIG_MACH_HMT)			+= mach-hmt.o
-obj-$(CONFIG_MACH_MINI6410)		+= mach-mini6410.o
+obj-$(CONFIG_MACH_MINI6410)		+= mach-mini6410.o mini6410-lcds.o
 obj-$(CONFIG_MACH_NCP)			+= mach-ncp.o
 obj-$(CONFIG_MACH_REAL6410)		+= mach-real6410.o
 obj-$(CONFIG_MACH_SMARTQ)		+= mach-smartq.o
@@ -62,3 +62,4 @@ obj-$(CONFIG_MACH_WLF_CRAGG_6410)	+= mach-crag6410.o mach-crag6410-module.o
 endif
 
 obj-$(CONFIG_MACH_S3C64XX_DT)		+= mach-s3c64xx-dt.o
+obj-$(CONFIG_TOUCHSCREEN_MINI6410)  	+= dev-ts-mini6410.o

@@ -498,6 +498,8 @@ static int pwm_samsung_probe(struct platform_device *pdev)
 	struct resource *res;
 	unsigned int chan;
 	int ret;
+	
+	dev_info(dev, "Samsung PWM driver");
 
 	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
 	if (chip == NULL)
