@@ -60,3 +60,7 @@ js-rtc-y = rtc.o
 obj-$(CONFIG_TILE_SROM)		+= tile-srom.o
 obj-$(CONFIG_XILLYBUS)		+= xillybus/
 obj-$(CONFIG_POWERNV_OP_PANEL)	+= powernv-op-panel.o
+
+obj-$(CONFIG_MINI6410_LEDS)	+= mini6410_leds.o
+obj-$(CONFIG_MINI6410_BUTTONS)	+= mini6410_buttons.o
+obj-$(CONFIG_MINI6410_BUZZER)	+= mini6410_pwm.o

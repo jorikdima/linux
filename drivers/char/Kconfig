@@ -23,6 +23,29 @@ config DEVKMEM
 	  /dev/kmem device is rarely used, but can be used for certain
 	  kind of kernel debugging operations.
 	  When in doubt, say "N".
+	  
+config MINI6410_LEDS
+	tristate "LED Support for Mini6410 GPIO LEDs"
+	depends on CPU_S3C6410
+	default y
+	help
+	  This option enables support for LEDs connected to GPIO lines
+	  on Mini6410 boards.
+
+config MINI6410_BUTTONS
+	tristate "Buttons driver for FriendlyARM Mini6410 development boards"
+	depends on CPU_S3C6410
+	default y
+	help
+	  this is buttons driver for FriendlyARM Mini6410 development boards
+
+config MINI6410_BUZZER
+	tristate "Buzzer driver for FriendlyARM Mini6410 development boards"
+	depends on CPU_S3C6410
+	default y
+	help
+	  this is buzzer driver for FriendlyARM Mini6410 development boards
+	  
 
 config SGI_SNSC
 	bool "SGI Altix system controller communication support"

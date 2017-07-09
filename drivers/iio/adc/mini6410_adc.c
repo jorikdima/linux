@@ -26,7 +26,6 @@
 #include <plat/adc.h>
 
 #undef DEBUG
-#define DEBUG
 #ifdef DEBUG
 #define DPRINTK(x...) {printk("%s(%d): ",__FUNCTION__ ,__LINE__);printk(x);}
 #else
