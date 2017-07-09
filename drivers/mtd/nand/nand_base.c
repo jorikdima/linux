@@ -342,7 +342,7 @@ static int nand_verify_buf16(struct mtd_info *mtd, const uint8_t *buf, int len)
  */
 static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 {
-	int page, chipnr, res = 0;
+	int page, res = 0;
 	struct nand_chip *chip = mtd->priv;
 	u16 bad;
 
@@ -351,6 +351,8 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 
 	page = (int)(ofs >> chip->page_shift) & chip->pagemask;
 
+#if 0
+	/* Moved to nand_block_checkbad() for chip specify support */
 	if (getchip) {
 		chipnr = (int)(ofs >> chip->chip_shift);
 
@@ -359,6 +361,7 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 		/* Select the NAND device */
 		chip->select_chip(mtd, chipnr);
 	}
+#endif
 
 	if (chip->options & NAND_BUSWIDTH_16) {
 		chip->cmdfunc(mtd, NAND_CMD_READOOB, chip->badblockpos & 0xFE,
@@ -378,8 +381,10 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 	else
 		res = hweight8(bad) < chip->badblockbits;
 
+#if 0
 	if (getchip)
 		nand_release_device(mtd);
+#endif
 
 	return res;
 }
@@ -477,9 +482,26 @@ static int nand_block_checkbad(struct mtd_info *mtd, loff_t ofs, int getchip,
 			       int allowbbt)
 {
 	struct nand_chip *chip = mtd->priv;
+	int chipnr, res = 0;
 
-	if (!chip->bbt)
-		return chip->block_bad(mtd, ofs, getchip);
+	/* Chip specify block_bad() support */
+	if (!chip->bbt) {
+		if (getchip) {
+			chipnr = (int)(ofs >> chip->chip_shift);
+
+			nand_get_device(chip, mtd, FL_READING);
+
+			/* Select the NAND device */
+			chip->select_chip(mtd, chipnr);
+		}
+
+		res = chip->block_bad(mtd, ofs, getchip);
+
+		if (getchip)
+			nand_release_device(mtd);
+
+		return res;
+	}
 
 	/* Return info from the table */
 	return nand_isbad_bbt(mtd, ofs, allowbbt);
@@ -3002,23 +3024,15 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 				id_data[0] == NAND_MFR_SAMSUNG &&
 				(chip->cellinfo & NAND_CI_CELLTYPE_MSK) &&
 				id_data[5] != 0x00) {
+			int __oobsz[] = { 0, 128, 218, 400 };
 			/* Calc pagesize */
 			mtd->writesize = 2048 << (extid & 0x03);
 			extid >>= 2;
 			/* Calc oobsize */
-			switch (extid & 0x03) {
-			case 1:
-				mtd->oobsize = 128;
-				break;
-			case 2:
-				mtd->oobsize = 218;
-				break;
-			case 3:
-				mtd->oobsize = 400;
-				break;
-			default:
+			if (extid & 0x10) {
 				mtd->oobsize = 436;
-				break;
+			} else {
+				mtd->oobsize = __oobsz[(extid & 0x03)];
 			}
 			extid >>= 2;
 			/* Calc blocksize */
@@ -3099,16 +3113,21 @@ ident_done:
 
 	/* Calculate the address shift from the page size */
 	chip->page_shift = ffs(mtd->writesize) - 1;
+
 	/* Convert chipsize to number of pages per chip -1. */
-	chip->pagemask = (chip->chipsize >> chip->page_shift) - 1;
+	if (!chip->pagemask) {
+		chip->pagemask = (chip->chipsize >> chip->page_shift) - 1;
+	}
 
 	chip->bbt_erase_shift = chip->phys_erase_shift =
 		ffs(mtd->erasesize) - 1;
-	if (chip->chipsize & 0xffffffff)
-		chip->chip_shift = ffs((unsigned)chip->chipsize) - 1;
-	else {
-		chip->chip_shift = ffs((unsigned)(chip->chipsize >> 32));
-		chip->chip_shift += 32 - 1;
+	if (!chip->chip_shift) {
+		if (chip->chipsize & 0xffffffff)
+			chip->chip_shift = ffs((unsigned)chip->chipsize) - 1;
+		else {
+			chip->chip_shift = ffs((unsigned)(chip->chipsize >> 32));
+			chip->chip_shift += 32 - 1;
+		}
 	}
 
 	/* Set the bad block position */
@@ -3126,8 +3145,11 @@ ident_done:
 	 */
 	if ((chip->cellinfo & NAND_CI_CELLTYPE_MSK) &&
 			(*maf_id == NAND_MFR_SAMSUNG ||
-			 *maf_id == NAND_MFR_HYNIX))
-		chip->options |= NAND_BBT_SCANLASTPAGE;
+			 *maf_id == NAND_MFR_HYNIX)) {
+		if (mtd->writesize < 4096) {
+			chip->options |= NAND_BBT_SCANLASTPAGE;
+		}
+	}
 	else if ((!(chip->cellinfo & NAND_CI_CELLTYPE_MSK) &&
 				(*maf_id == NAND_MFR_SAMSUNG ||
 				 *maf_id == NAND_MFR_HYNIX ||

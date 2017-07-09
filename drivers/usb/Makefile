@@ -23,6 +23,8 @@ obj-$(CONFIG_USB_HWA_HCD)	+= host/
 obj-$(CONFIG_USB_ISP1760_HCD)	+= host/
 obj-$(CONFIG_USB_IMX21_HCD)	+= host/
 
+obj-$(CONFIG_USB_SERIAL)	+= serial/
+
 obj-$(CONFIG_USB_C67X00_HCD)	+= c67x00/
 
 obj-$(CONFIG_USB_WUSB)		+= wusbcore/
@@ -37,8 +39,6 @@ obj-$(CONFIG_USB)		+= storage/
 
 obj-$(CONFIG_USB_MDC800)	+= image/
 obj-$(CONFIG_USB_MICROTEK)	+= image/
-
-obj-$(CONFIG_USB_SERIAL)	+= serial/
 
 obj-$(CONFIG_USB)		+= misc/
 obj-$(CONFIG_EARLY_PRINTK_DBGP)	+= early/

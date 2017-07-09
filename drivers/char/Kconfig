@@ -97,6 +97,41 @@ config DEVKMEM
 	  kind of kernel debugging operations.
 	  When in doubt, say "N".
 
+config MINI6410_LEDS
+	tristate "LED Support for Mini6410 GPIO LEDs"
+	depends on CPU_S3C6410
+	default y
+	help
+	  This option enables support for LEDs connected to GPIO lines
+	  on Mini6410 boards.
+
+config MINI6410_HELLO_MODULE
+	tristate "Mini6410 module sample"
+	depends on CPU_S3C6410
+	help
+	  Mini6410 module sample.
+
+config MINI6410_BUTTONS
+	tristate "Buttons driver for FriendlyARM Mini6410 development boards"
+	depends on CPU_S3C6410
+	default y
+	help
+	  this is buttons driver for FriendlyARM Mini6410 development boards
+
+config MINI6410_BUZZER
+	tristate "Buzzer driver for FriendlyARM Mini6410 development boards"
+	depends on CPU_S3C6410
+	default y
+	help
+	  this is buzzer driver for FriendlyARM Mini6410 development boards
+
+config MINI6410_ADC
+	bool "ADC driver for FriendlyARM Mini6410 development boards"
+	depends on MACH_MINI6410
+	default y if MACH_MINI6410
+	help
+	  this is ADC driver for FriendlyARM Mini6410 development boards
+
 config BFIN_JTAG_COMM
 	tristate "Blackfin JTAG Communication"
 	depends on BLACKFIN

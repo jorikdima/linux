@@ -86,3 +86,10 @@ obj-$(CONFIG_RAMOOPS)		+= ramoops.o
 
 obj-$(CONFIG_JS_RTC)		+= js-rtc.o
 js-rtc-y = rtc.o
+
+obj-$(CONFIG_MINI6410_LEDS)	+= mini6410_leds.o
+obj-$(CONFIG_MINI6410_HELLO_MODULE)	+= mini6410_hello_module.o
+obj-$(CONFIG_MINI6410_BUTTONS)	+= mini6410_buttons.o
+obj-$(CONFIG_MINI6410_BUZZER)	+= mini6410_pwm.o
+obj-$(CONFIG_MINI6410_ADC)		+= mini6410_adc.o
+

@@ -79,6 +79,12 @@ struct video_device
 	/* attribute to differentiate multiple indices on one physical device */
 	int index;
 
+#ifdef CONFIG_VIDEO_SAMSUNG
+	/* added for TV */
+	int type2;
+	int users;
+#endif
+
 	/* V4L2 file handles */
 	spinlock_t		fh_lock; /* Lock for all v4l2_fhs */
 	struct list_head	fh_list; /* List of struct v4l2_fh */

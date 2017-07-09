@@ -98,21 +98,6 @@ config MACH_ANW6410
 	help
 	  Machine support for the A&W6410
 
-config MACH_MINI6410
-	bool "MINI6410"
-	select CPU_S3C6410
-	select S3C_DEV_HSMMC
-	select S3C_DEV_HSMMC1
-	select S3C64XX_SETUP_SDHCI
-	select S3C_DEV_USB_HOST
-	select S3C_DEV_NAND
-	select S3C_DEV_FB
-	select S3C64XX_SETUP_FB_24BPP
-	select SAMSUNG_DEV_ADC
-	select SAMSUNG_DEV_TS
-	help
-	  Machine support for the FriendlyARM MINI6410
-
 config MACH_REAL6410
 	bool "REAL6410"
 	select CPU_S3C6410
@@ -214,6 +199,46 @@ config SMDK6410_WM1192_EV1
 	  the kernel.  The presence of the daughtercard will be
 	  detected at runtime so the the resulting kernel can be used
 	  with or without the 1192-EV1 fitted.
+
+config MACH_MINI6410
+	bool "MINI6410"
+	select CPU_S3C6410
+	select SAMSUNG_DEV_ADC
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1
+	select S3C_DEV_FB
+	select S3C_DEV_USB_HOST
+	select S3C_DEV_USB_HSOTG
+	select S3C_DEV_WDT
+	select S3C_DEV_RTC
+	select HAVE_S3C2410_WATCHDOG
+	select S3C64XX_SETUP_SDHCI
+	select S3C64XX_SETUP_FB_24BPP
+	select S3C64XX_DEV_FIMC0 if VIDEO_SAMSUNG
+	select S3C64XX_DEV_FIMC1 if VIDEO_SAMSUNG
+	select WIRELESS_EXT
+	select WEXT_SPY
+	select WEXT_PRIV
+	select AVERAGE
+	help
+	  Machine support for the FriendlyARM Mini6410
+
+menu "MINI6410 MMC/SD slot setup"
+	depends on MACH_MINI6410
+
+config MINI6410_SD_CH0
+	bool "Use channel 0 (removable)"
+	depends on MACH_MINI6410
+	help
+	  Say Y to enable MMC/SD slot 0 for USB storage, Camera, Wi-Fi etc.
+
+config MINI6410_SD_CH1
+	bool "Use channel 1 (on-board)"
+	depends on MACH_MINI6410
+	help
+	  Say Y to enable the NONREMOVABLE slot for SDIO Wi-Fi.
+
+endmenu
 
 config MACH_NCP
 	bool "NCP"

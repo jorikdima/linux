@@ -901,6 +901,22 @@ static int ath9k_hif_usb_dev_init(struct hif_device_usb *hif_dev, u32 drv_info)
 	 */
 	for (idx = 0; idx < alt->desc.bNumEndpoints; idx++) {
 		endp = &alt->endpoint[idx].desc;
+		if (((endp->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK)
+					== 0x04) &&
+				((endp->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK)
+				 == USB_ENDPOINT_XFER_INT)) {
+			endp->bmAttributes &= ~USB_ENDPOINT_XFERTYPE_MASK;
+			endp->bmAttributes |= USB_ENDPOINT_XFER_BULK;
+			endp->bInterval = 0;
+		}
+	}
+
+	/* On downloading the firmware to the target, the USB descriptor of EP4
+	 * is 'patched' to change the type of the endpoint to Bulk. This will
+	 * bring down CPU usage during the scan period.
+	 */
+	for (idx = 0; idx < alt->desc.bNumEndpoints; idx++) {
+		endp = &alt->endpoint[idx].desc;
 		if ((endp->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK)
 				== USB_ENDPOINT_XFER_INT) {
 			endp->bmAttributes &= ~USB_ENDPOINT_XFERTYPE_MASK;
